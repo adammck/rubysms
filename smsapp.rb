@@ -87,7 +87,7 @@ module SMS
 					# now, before moving on to the next app. we send
 					# it via app#send, rather than SMS::send_sms, in case
 					# the app has any special outgoing functionality
-					app.send_sms(from, resp.message)
+					app.send_sms(from, *resp.message)
 				end
 			end
 		end
@@ -167,7 +167,7 @@ module SMS
 		def start; end
 		def stop; end
 		
-		def respond(msg)
+		def respond(*msg)
 			raise SMS::Respond, msg
 		end
 		
@@ -219,25 +219,37 @@ module SMS
 			end
 		end
 		
-		def send_sms(to, msg)
+		def send_sms(to, *msgs)
 
-			# if the message is a symbol, then attempt to
-			# resolve it via the self.class::Messages hash
-			if msg.is_a? Symbol
-				if self.class.const_defined?(:Messages)
-					unless msg = self.class.const_get(:Messages)[msg]
-						log %Q<No such message as "#{msg}" for #{self.class}>, :warn
+			# iterate multiple arguments, to resolve
+			# messages in each of them separately,
+			parts = msgs.collect do |msg|
+				
+				# if the message is a symbol, then attempt to
+				# resolve it via the self.class::Messages hash
+				if msg.is_a? Symbol
+					if self.class.const_defined?(:Messages)				
+						if msg_str = self.class.const_get(:Messages)[msg]
+							log "Resolved message #{msg.inspect} to #{msg_str.inspect}"
+							msg = msg_str
+						else
+							log "No such message as #{msg.inspect} for #{self.class}", :warn
+							msg = msg.to_s
+						end
+					else
+						# no messages const in this app, but receiving
+						# a cryptic message name is better than nothing
+						log "No Messages for #{self.class}", :warn
 						msg = msg.to_s
 					end
-				else
-					# no messages const in this app, but receiving
-					# a cryptic message name is better than nothing
-					log "No Messages for #{self.class}", :warn
-					msg = msg.to_s
 				end
+				
+				msg
 			end
 			
-			SMS::send_sms(to, msg)
+			# send all parts joined with no separator,
+			# for maximum control over formatting
+			SMS::send_sms(to, parts.join(""))
 		end
 		
 		def log(msg, type=:info)
