@@ -65,7 +65,7 @@ module SMS::Backends
 		
 			def add_log_msg(session, dir, msg)
 				arr = [nil, dir, msg]
-				arr[0] = arr.object_id
+				arr[0] = arr.object_id.abs
 			
 				# initialize an empty log for
 				# this session if required
