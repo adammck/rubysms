@@ -29,7 +29,7 @@ module SMS
 			# start sending and receiving SMS early, so
 			# we can use the backend in app initializers
 			begin
-				@backend = SMS::Backends.const_get(backend)
+				@backend = SMS::Backends.const_get(camelize(backend))
 				self.backend.serve_forever(*args)
 				
 			#rescue StandardError
@@ -136,6 +136,10 @@ module SMS
 			log "Res Mem: #{resident}KiB"
 			log "Virt Mem: #{virtual}KiB"
 		end
+
+		def camelize(sym)
+			sym.to_s.gsub(/(?:\A|_)(.)/) { $1.upcase }
+		end
 		
 		LogColors = {
 			:init => 46,
@@ -150,7 +154,7 @@ module SMS
 			:err  => "FAIL",
 			:in   => " << ",
 			:out  => " >> " }
-	end
+	end # << self
 	
 	class CancelIncoming < StandardError
 	end

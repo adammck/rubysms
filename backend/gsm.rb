@@ -7,13 +7,13 @@ module SMS::Backends
 	# and run, only a single instance can access
 	# the GSM modem at once: this is the instance
 	class Gsm < SMS::Backend
-		def serve_forever(port="/dev/ttyS0", pin=nil)
+		def serve_forever(port=:auto, pin=nil)
 			begin
 				@gsm = GsmModem.new(port)
 				@gsm.use_pin(pin) unless pin.nil?
 				@gsm.receive SMS.method(:dispatch)
 				
-				bands = @gsm.bands.join(", ")
+				bands = @gsm.bands_available.join(", ")
 				log "Using GSM Band: #{@gsm.band}MHz"
 				log "Modem supports: #{bands}"
 				
