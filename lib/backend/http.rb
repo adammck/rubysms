@@ -117,6 +117,7 @@ SMS::Backends::Http::HTML = <<EOF
 				#log li {
 					list-style: none;
 					margin-bottom: 0.5em;
+					white-space: pre;
 				}
 					
 					#log li.in  { color: #800; }

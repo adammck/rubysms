@@ -64,38 +64,24 @@ module SMS
 			end
 		end
 		
-#		def send_sms(to, *msgs)
-#
-#			# iterate multiple arguments, to resolve
-#			# messages in each of them separately,
-#			parts = msgs.collect do |msg|
-#				
-#				# if the message is a symbol, then attempt to
-#				# resolve it via the self.class::Messages hash
-#				if msg.is_a? Symbol
-#					if self.class.const_defined?(:Messages)				
-#						if msg_str = self.class.const_get(:Messages)[msg]
-#							log "Resolved message #{msg.inspect} to #{msg_str.inspect}"
-#							msg = msg_str
-#						else
-#							log "No such message as #{msg.inspect} for #{self.class}", :warn
-#							msg = msg.to_s
-#						end
-#					else
-#						# no messages const in this app, but receiving
-#						# a cryptic message name is better than nothing
-#						log "No Messages for #{self.class}", :warn
-#						msg = msg.to_s
-#					end
-#				end
-#				
-#				msg
-#			end
-#			
-#			# send all parts joined with no separator,
-#			# for maximum control over formatting
-#			SMS::send_sms(to, parts.join(""))
-#		end
+		def assemble(*parts)
+			parts.collect do |msg|
+				if msg.is_a? Symbol
+					begin
+						self.class.const_get(:Messages)[msg]
+				
+					# something went wrong, but i don't
+					# particularly care what, right now.
+					# log it, and carry on regardless
+					rescue StandardError
+						log "Invalid message #{msg.inspect} for #{self.class}", :warn
+						"<#{msg}>"
+					end
+				else
+					msg
+				end
+			end.join("")
+		end
 		
 		def log(msg, type=:info)
 			SMS::log(msg, type)#, self.class)
