@@ -41,9 +41,9 @@ module SMS::Backends
 		# called from another ruby process, via
 		# drb, to simulate an incoming sms message
 		def incoming(sender, text)
-			SMS::dispatch\
-				SMS::Incoming.new\
-					self.class.instance, sender, Time.now, text
+			SMS::dispatch(
+				SMS::Incoming.new(
+					self.class.instance, sender, Time.now, text))
 		end
 	end
 end

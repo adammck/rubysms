@@ -53,9 +53,9 @@ module SMS::Backends
 			# object from RubyGSM, NOT the more useful
 			# SMS::Incoming object from RubySMS
 			
-			SMS::dispatch\
-				SMS::Incoming.new\
-					self.class.instance, msg.sender, msg.sent, msg.text
+			SMS::dispatch(
+				SMS::Incoming.new(
+					self.class.instance, msg.sender, msg.sent, msg.text)
 		end
 	end
 end

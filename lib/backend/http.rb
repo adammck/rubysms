@@ -37,9 +37,9 @@ module SMS::Backends
 						# push the incoming message
 						# into smsapp, to distribute
 						# to each application
-						SMS::dispatch\
-							SMS::Incoming.new\
-								@inst, session, Time.now, msg
+						SMS::dispatch(
+							SMS::Incoming.new(
+								@inst, session, Time.now, msg))
 						
 					# only post is allowed to this
 					# url, so reject anything else
