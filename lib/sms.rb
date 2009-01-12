@@ -28,16 +28,18 @@ Thread.current["name"] = "main"
 
 module SMS
 	class << self
-		attr_reader :apps
+		attr_reader :apps, :backends
 		
 		def serve
 			@apps = {}
+			@backends = []\
+				if @backends.nil?
 			
 			# (attempt to) start up each
 			# backend in a separate thread
-			backends.each do |be|
+			backends.each do |inst, args|
 				Thread.new do
-					be.start
+					inst.start(*args)
 				end
 			end
 			
@@ -60,8 +62,8 @@ module SMS
 				# fire the "stop" method of
 				# each application and backend
 				# before terminating the process
-				apps.each_value { |app| app.stop }
-				backends.each   { |be|  be.stop }
+				backends.each   { |inst, args| inst.stop }
+				apps.each_value { |app|        app.stop }
 				
 				exit
 			end
@@ -93,16 +95,10 @@ module SMS
 				# SMS::Backends, named according to its filename
 				sym = camelize(backend)
 				mod = SMS::Backends.const_get(sym)
-				@backends.push(mod)
+				@backends.push([mod.instance, args])
 
 			rescue StandardError
-				log "Couldn't initialize backend: #{mod}", :err
-			end
-		end
-		
-		def backends
-			@backends.collect do |be|
-				be.instance
+				log "Couldn't initialize backend: #{backend}", :err
 			end
 		end
 		
