@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 # vim: noet
 
+
 require "drb.rb"
+
+
 module SMS::Backends
 	class Drb < SMS::Backend
 		DRB_PORT = 1370
 		
-		def serve_forever
+		def start
 			begin
 			
 				# start the DRb service, listening for connections
@@ -20,7 +23,9 @@ module SMS::Backends
 			end
 		end
 		
-		def send_sms(to, msg)
+		def send_sms(msg)
+			to = msg.recipient
+			super
 			
 			# if this is the first time that we
 			# have communicated with this DRb
@@ -30,13 +35,15 @@ module SMS::Backends
 				@injectors[to] = drbo
 			end
 			
-			@injectors[to].incoming(msg)
+			@injectors[to].incoming(msg.text)
 		end
 		
 		# called from another ruby process, via
 		# drb, to simulate an incoming sms message
-		def incoming(from, msg)
-			SMS::dispatch from, Time.now, msg
+		def incoming(sender, text)
+			SMS::dispatch\
+				SMS::Incoming.new\
+					self.class.instance, sender, Time.now, text
 		end
 	end
 end

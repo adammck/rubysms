@@ -7,10 +7,11 @@ require "rack"
 
 module SMS::Backends
 	class Http < SMS::Backend
-		HTTP_PORT = 1370
+		HTTP_PORT = 1270
 		
 		class RackApp
-			def initialize
+			def initialize(http_backend_instance)
+				@inst = http_backend_instance
 				@log = {}
 			end
 			
@@ -32,9 +33,14 @@ module SMS::Backends
 						msg = req.POST["msg"]
 						session = m.captures[0]
 						add_log_msg(session, "in", msg)
-						puts [session, Time.now, msg].inspect
-						SMS::dispatch session, Time.now, msg
-					
+						
+						# push the incoming message
+						# into smsapp, to distribute
+						# to each application
+						SMS::dispatch\
+							SMS::Incoming.new\
+								@inst, session, Time.now, msg
+						
 					# only post is allowed to this
 					# url, so reject anything else
 					else
@@ -77,16 +83,17 @@ module SMS::Backends
 			end
 		end
 		
-		def serve_forever
-			Thread.new do
-				@app = RackApp.new
-				Rack::Handler::Mongrel.run(
-					@app, :Port=>HTTP_PORT)
-			end
+		def start
+			@app = RackApp.new(self.class.instance)
+			uri = "http://localhost:#{HTTP_PORT}"
+			log ["Started HTTP Offline Backend", "URI: #{uri}"], :init
+			
+			Rack::Handler::Mongrel.run(
+				@app, :Port=>HTTP_PORT)
 		end
 		
-		def send_sms(to, msg)
-			@app.add_log_msg(to, "out", msg)
+		def send_sms(msg)
+			@app.add_log_msg(msg.recipient, "out", msg.text)
 		end
 	end
 end

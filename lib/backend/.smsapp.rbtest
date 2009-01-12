@@ -1,0 +1,84 @@
+#!/usr/bin/env ruby
+# vim: noet
+
+class SmsApplication
+	Wrapper = "^%s$"
+	
+	class Namespace
+		class << self
+			def serves(regexp)
+				@serve = regexp
+			end
+			
+			def 
+		end
+	end
+	
+	class << self
+		def serve(regexp, &blk)
+			unless regexp.is_a?(Regexp)
+				regexp = Regexp.new(Wrapper % regexp)
+			end
+			
+			if block_given?
+				@handlers[regexp] = blk
+				
+			else
+				@tmp = regexp
+			end
+		end
+		
+		def prefix(regexp, &blk)
+			class_eval &blk
+		end
+		
+		def method_added(meth)
+			return unless @tmp
+			@handlers = {} if @handlers.nil?
+			@handlers[@tmp] = meth
+			@tmp = nil
+		end
+		
+		def handlers
+			return @handlers || []
+		end
+	end
+	
+	def dispatch(from, dt, msg)
+		self.class.handlers.each_pair do |regex, handler|
+			if regex.match(msg)
+				self.send(handler, from, dt, msg)
+			end
+		end
+	end
+end
+
+class TestApplication < SmsApplication
+	class Help < Namespace
+		serves "help"
+		
+		#response :invalid, "I don't understand"
+		#response :default, "Help options: HELP ALPHA, HELP BETA, HELP GAMMA"
+		
+		class Query < Namespace
+			serves "(alpha|beta|gamma)"
+			
+			def receive
+				
+			end
+		end
+	end
+	
+	class Report < Namespace
+		serves "report"
+		
+		def
+		class Valid < Namespace
+			serves "(\w+) (\d+) (\d+)"
+		end
+	end
+end
+
+app = TestApplication.new()
+p app.class.handlers
+
