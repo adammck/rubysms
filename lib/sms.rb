@@ -146,13 +146,17 @@ module SMS
 			indent = " " * (prefix_txt.length + 1)
 			puts prefix + " " + msg.gsub("\n", "\n#{indent}")
 		end
+		
+		def log_with_time(msg, *rest)
+			log("#{time_log(Time.now)} #{msg}", *rest)
+		end
+		
+		private
 
 		def time_log(dt=nil)
 			dt = DateTime.now unless dt
 			dt.strftime("%I:%M%p")
 		end
-		
-		private
 
 		def camelize(sym)
 			sym.to_s.gsub(/(?:\A|_)(.)/) { $1.upcase }

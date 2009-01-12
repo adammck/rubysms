@@ -94,6 +94,7 @@ module SMS::Backends
 		
 		def send_sms(msg)
 			@app.add_log_msg(msg.recipient, "out", msg.text)
+			super
 		end
 	end
 end

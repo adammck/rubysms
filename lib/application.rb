@@ -9,11 +9,6 @@ module SMS
 		def start; end
 		def stop; end
 		
-#		def respond(*msg)
-#			raise SMS::Respond, msg
-#		end
-		
-		#def incoming(from, dt, msg)
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
 			
@@ -48,7 +43,6 @@ module SMS
 							# not found), which allows processing to
 							# continue as if the method never matched
 							catch(:do_not_want) do
-								#send(method, msg.sender, msg.sent, *m.captures)
 								send(method, msg, *m.captures)
 								return true
 							end
@@ -57,7 +51,6 @@ module SMS
 					# the special :anything pattern
 					# can be used as a default service
 					elsif pattern == :anything
-						#send(method, msg.sender, msg.sent, msg.text)
 						send(method, msg)
 					end
 				end
@@ -84,7 +77,7 @@ module SMS
 		end
 		
 		def log(msg, type=:info)
-			SMS::log(msg, type)#, self.class)
+			SMS::log(msg, type)
 		end
 	
 		class << self

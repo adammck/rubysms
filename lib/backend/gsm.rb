@@ -42,6 +42,7 @@ module SMS::Backends
 		
 		def send_sms(msg)
 			@gsm.send_sms(msg.recipient, msg.text)
+			super
 		end
 		
 		# called back by rubygsm when an incoming

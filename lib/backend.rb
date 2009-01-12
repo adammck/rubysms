@@ -16,7 +16,7 @@ module SMS
 		def stop(*args); end
 		
 		def send_sms(msg)
-			log "#{SMS::time_log(Time.now)} #{msg.recipient}: #{msg.text} (#{msg.text.length})", :out
+			log_with_time "#{msg.recipient}: #{msg.text} (#{msg.text.length})", :out
 			
 			# notify each app of the outgoing sms
 			# note that the sending can still fail
@@ -44,6 +44,10 @@ module SMS
 		# backends can use them without the prefix
 		def log(*args)
 			SMS::log(*args)
+		end
+		
+		def log_with_time(*args)
+			SMS::log_with_time(*args)
 		end
 	end
 end
