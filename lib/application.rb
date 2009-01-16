@@ -57,22 +57,26 @@ module SMS
 			end
 		end
 		
+		def message(msg)
+			if msg.is_a? Symbol
+				begin
+					self.class.const_get(:Messages)[msg]
+			
+				# something went wrong, but i don't
+				# particularly care what, right now.
+				# log it, and carry on regardless
+				rescue StandardError
+					log "Invalid message #{msg.inspect} for #{self.class}", :warn
+					"<#{msg}>"
+				end
+			else
+				msg
+			end
+		end
+		
 		def assemble(*parts)
 			parts.collect do |msg|
-				if msg.is_a? Symbol
-					begin
-						self.class.const_get(:Messages)[msg]
-				
-					# something went wrong, but i don't
-					# particularly care what, right now.
-					# log it, and carry on regardless
-					rescue StandardError
-						log "Invalid message #{msg.inspect} for #{self.class}", :warn
-						"<#{msg}>"
-					end
-				else
-					msg
-				end
+				message(msg)
 			end.join("")
 		end
 		

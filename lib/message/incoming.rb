@@ -12,7 +12,9 @@ module SMS
 		end
 		
 		def respond(response_text)
-			SMS::Outgoing.new(backend, sender, response_text).send!
+			og = SMS::Outgoing.new(backend, sender, response_text)
+			og.in_response_to = self
+			og.send!
 		end
 	end
 end

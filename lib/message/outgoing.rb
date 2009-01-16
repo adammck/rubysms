@@ -4,6 +4,7 @@
 
 module SMS
 	class Outgoing < Gsm::Outgoing
+		attr_accessor :in_response_to
 		attr_reader :backend
 		
 		def initialize(backend, *rest)

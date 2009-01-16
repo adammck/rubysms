@@ -56,7 +56,7 @@ module SMS::Backends
 			
 			SMS::dispatch(
 				SMS::Incoming.new(
-					self.class.instance, msg.sender, msg.sent, msg.text)
+					self.class.instance, msg.sender, msg.sent, msg.text))
 		end
 	end
 end

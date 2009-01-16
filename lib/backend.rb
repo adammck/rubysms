@@ -22,7 +22,7 @@ module SMS
 			# note that the sending can still fail
 			SMS::apps.each_value do |app|
 				if app.respond_to? :outgoing
-					app.outgoing msg.recipient, Time.now, msg.text
+					app.outgoing msg
 				end
 			end
 		end
