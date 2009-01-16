@@ -28,7 +28,7 @@ class SmsGui
 		
 		# create a text mark to keep at the end of
 		# the log, so we can keep scrolling to it
-		@lb.create_mark("end", @lb.end_iter, false)
+		@lb.create_mark("end", @lb.end_iter, true)
 		
 		# create colors for incoming and outgoing messages
 		@lb.create_tag("incoming", "family"=>"monospace", "foreground"=>"#AA0000")
@@ -132,12 +132,16 @@ class SmsGui
 		# (using the colors defined in #initialize)
 		@lb.insert(@lb.end_iter, msg, tag)
 		
-		# update the position of the end marker
-		# (move it to the end!), and scroll to
-		# it, to keep the latest text in view
-		mark = @lb.get_mark("end")
-		@lb.move_mark(mark, @lb.end_iter)
-		@log.scroll_to_mark(mark, 0, true, 0, 1)
+		# scroll to the end of the *previous*
+		# message, to bring the top of this
+		# message into view, in case it is long
+		@log.scroll_to_mark(@lb.get_mark("end"), 0, true, 1, 0)
+		
+		# update the position of the end marker,
+		# which we will scroll to (above), when
+		# the next message is logged
+		@lb.move_mark(@lb.get_mark("end"), @lb.end_iter)
+		@lb.end_iter.line_offset = 0
 	end
 	
 	
