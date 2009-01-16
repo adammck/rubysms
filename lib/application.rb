@@ -75,9 +75,17 @@ module SMS
 		end
 		
 		def assemble(*parts)
+			
+			# the last element can be an array,
+			# which contains arguments to sprintf
+			args = parts[-1].is_a?(Array)? parts.pop : []
+			
+			# resolve each remaining part
+			# via self#messge, which can
+			# (should?) be overloaded
 			parts.collect do |msg|
 				message(msg)
-			end.join("")
+			end.join("") % args
 		end
 		
 		def log(msg, type=:info)
