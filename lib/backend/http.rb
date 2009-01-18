@@ -57,7 +57,7 @@ module SMS::Backends
 				# render the static HTML content (the log
 				# contents are rendered via JSON, above)
 				elsif req.path_info.match(/^\/\d{4}$/)
-					return [200, {"content-type": "text/html"}, HTML]
+					return [200, {"content-type" => "text/html"}, HTML]
 				
 				# no other url is valid
 				else
