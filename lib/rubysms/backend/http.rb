@@ -5,8 +5,8 @@ require "rack"
 
 
 
-module SMS::Backends
-	class Http < SMS::Backend
+module SMS::Backend
+	class HTTP < Base
 		HTTP_PORT = 1270
 		
 		class RackApp
@@ -37,7 +37,7 @@ module SMS::Backends
 						# push the incoming message
 						# into smsapp, to distribute
 						# to each application
-						SMS::dispatch(
+						@inst.router.incoming(
 							SMS::Incoming.new(
 								@inst, session, Time.now, msg))
 						
@@ -84,7 +84,7 @@ module SMS::Backends
 		end
 		
 		def start
-			@app = RackApp.new(self.class.instance)
+			@app = RackApp.new(self)
 			uri = "http://localhost:#{HTTP_PORT}"
 			log ["Started HTTP Offline Backend", "URI: #{uri}"], :init
 			
@@ -99,11 +99,12 @@ module SMS::Backends
 	end
 end
 
-SMS::Backends::Http::HTML = <<EOF
+SMS::Backend::HTTP::HTML = <<EOF
 <html>
 	<head>
 		<title>RubySMS Virtual Device</title>
-		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js"></script>
+		<!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js"></script>-->
+		<script type="text/javascript" src="http://localhost:8000/mootools-1.2-core-yc.js"></script>
 		<style type="text/css">
 			body {
 				font: 9pt monospace;

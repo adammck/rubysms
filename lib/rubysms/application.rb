@@ -2,12 +2,7 @@
 # vim: noet
 
 module SMS
-	class App
-		
-		# stubs to avoid
-		# NoMethodError
-		def start; end
-		def stop; end
+	class App < Thing
 		
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
@@ -88,10 +83,6 @@ module SMS
 			end.join("") % args
 		end
 		
-		def log(msg, type=:info)
-			SMS::log(msg, type)
-		end
-	
 		class << self
 			def serve(regex)
 				@serve = regex

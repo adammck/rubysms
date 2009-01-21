@@ -5,8 +5,8 @@
 require "drb.rb"
 
 
-module SMS::Backends
-	class Drb < SMS::Backend
+module SMS::Backend
+	class DRB < Base
 		DRB_PORT = 1370
 		
 		def start
@@ -41,9 +41,9 @@ module SMS::Backends
 		# called from another ruby process, via
 		# drb, to simulate an incoming sms message
 		def incoming(sender, text)
-			SMS::dispatch(
+			router.incoming(
 				SMS::Incoming.new(
-					self.class.instance, sender, Time.now, text))
+					self, sender, Time.now, text))
 		end
 	end
 end
