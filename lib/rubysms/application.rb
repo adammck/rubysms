@@ -17,50 +17,55 @@ module SMS
 		
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
-			
-				# iterate the services defined for this
-				# class, and call the first that matches
-				# the incoming message. 
-				services.each do |service|
-					method, pattern, priority = *service
+				text = msg.text					
+				
+				# lock threads while handling this message, so we don't have
+				# to worry about being interrupted by other incoming messages
+				# (in theory, this shouldn't be a problem, but it turns out
+				# to be a frequent source of bugs)
+				Thread.exclusive do
+					while true
+						services.each do |service|
+							method, pattern, priority = *service
+						
+							# if this pattern looks like a regex,
+							# attempt to match the incoming message
+							if pattern.respond_to?(:match)
+								if m = pattern.match(text)
+									
+									# we have a match! log, and call
+									# the method with the captures
+									log_dispatch(method, m.captures)
+									send(method, msg, *m.captures)
+								
+									# the method accepted the text, but it may not be interested
+									# in the whole message. so crop off just the part that matched
+									text.sub!(pattern, "")
+								
+									# stop processing if we have
+									# dealt with all of the text
+									return true unless text =~ /\S/
+								
+									# there is text remaining, so
+									# (re-)start iterating services
+									# (jumps back to services.each)
+									retry
+								end
 					
-					# if this pattern looks like a regex,
-					# attempt to match the incoming message
-					if pattern.respond_to?(:match)
-						if m = pattern.match(msg.text)
-							
-							# build a string to clearly log where
-							# we're dispatching the message to
-							meth_str = self.class.to_s + "#" + method.to_s
-							meth_str += " #{m.captures.inspect}"\
-								unless m.captures.empty?
-							
-							log "Dispatching to: #{meth_str}"
-							
-							# dispatch this message to the matching
-							# method, and stop processing (specifically,
-							# so services can start specific, and become
-							# more and more liberal without checking if
-							# the message has already been dispatched
-							# --
-							# once the method is invoked, it can throw
-							# the :do_not_want symbol to refuse the
-							# message (for example, if a record was
-							# not found), which allows processing to
-							# continue as if the method never matched
-							catch(:do_not_want) do
-								send(method, msg, *m.captures)
+							# the special :anything pattern can be used
+							# as a default service. once this is hit, we
+							# are done processing the entire message
+							elsif pattern == :anything
+								log_dispatch(method, [text])
+								send(method, msg, text)
+								
+								# stop processing
 								return true
 							end
-						end
-					
-					# the special :anything pattern
-					# can be used as a default service
-					elsif pattern == :anything
-						send(method, msg)
-					end
-				end
-			end
+						end#each
+					end#while
+				end#exclusive
+			end#if
 		end
 		
 		def message(msg)
@@ -92,6 +97,16 @@ module SMS
 			parts.collect do |msg|
 				message(msg)
 			end.join("") % args
+		end
+		
+		private
+		
+		# Adds a log message detailing which method is being
+		# invoked, with which arguments (if any)
+		def log_dispatch(method, args=[])
+			meth_str = self.class.to_s + "#" + method.to_s
+			meth_str += " #{args.inspect}" unless args.empty?
+			log "Dispatching to: #{meth_str}"
 		end
 		
 		class << self
