@@ -51,7 +51,8 @@ module SMS::Backend
 				
 				elsif m = req.path_info.match(/^\/(\d{4})\.json$/)
 					session = m.captures[0]
-					res.body = "[" + (@log[session] ? (@log[session].collect { |msg| msg.inspect }.join(", ")) : "") + "]"
+					json = "[" + (@log[session] ? (@log[session].collect { |msg| msg.inspect }.join(", ")) : "") + "]"					
+					return [200, {"content-type" => "application/json"}, json]
 				
 				# if this request is for a session id, then
 				# render the static HTML content (the log
