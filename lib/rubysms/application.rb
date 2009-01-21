@@ -4,6 +4,17 @@
 module SMS
 	class App < Thing
 		
+		# Creates and starts a router to serve only
+		# this application using the offline DRB and
+		# HTTP backends. Handy during development.
+		def self.serve!
+			r = SMS::Router.new
+			r.add SMS::Backend::HTTP.new
+			r.add SMS::Backend::DRB.new
+			r.add self.new
+			r.serve_forever
+		end
+		
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
 			
