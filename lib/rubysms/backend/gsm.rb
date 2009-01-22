@@ -8,14 +8,22 @@ module SMS::Backend
 	# and run, only a single instance can access
 	# the GSM modem at once: this is the instance
 	class GSM < Base
-		def start(port=:auto, pin=nil)
+		
+		# just store the arguments until the
+		# backend is ready to be started
+		def initialize(port=:auto, pin=nil)
+			@port = port
+			@pin = nil
+		end
+		
+		def start
 			
 			# lock the threads during modem initialization,
 			# simply to avoid the screen log being mixed up
 			Thread.exclusive do
 				begin
-					@gsm = ::Gsm::Modem.new(port)
-					@gsm.use_pin(pin) unless pin.nil?
+					@gsm = ::Gsm::Modem.new(@port)
+					@gsm.use_pin(@pin) unless @pin.nil?
 					@gsm.receive method(:incoming)
 					
 					#bands = @gsm.bands_available.join(", ")
@@ -29,7 +37,7 @@ module SMS::Backend
 				# couldn't open the port. this usually means
 				# that the modem isn't plugged in to it...
 				rescue Errno::ENOENT, ArgumentError
-					log "Couldn't open #{port}", :err
+					log "Couldn't open #{@port}", :err
 					raise IOError
 					
 				# something else went wrong
