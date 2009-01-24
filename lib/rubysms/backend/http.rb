@@ -67,7 +67,7 @@ module SMS::Backend
 			
 			# add the outgoing message to the log
 			msg_id = @msg_log[s].push\
-				[t.object_id, "out", t]
+				[t.object_id.abs.to_s, "out", t]
 		end
 		
 		
@@ -156,7 +156,7 @@ module SMS::Backend
 					# log the incoming message, so it shows
 					# up in the two-way "conversation" 
 					msg_id = @backend.msg_log[s].push\
-						[t.object_id, "in", t]
+						[t.object_id.abs.to_s, "in", t]
 
 					# push the incoming message
 					# into RubySMS, to distribute
@@ -170,7 +170,7 @@ module SMS::Backend
 					return [
 						200,
 						{"content-type" => "text/plain" },
-						t.object_id.to_s]
+						t.object_id.abs.to_s]
 				end
 				
 				# nothing else is valid. not 404, because it might be
@@ -201,10 +201,23 @@ SMS::Backend::HTTP::HTML = <<EOF
 				line-height: 1;
 				font: 8pt sans-serif;
 				background: #eef;
-				padding: 1em;
+				padding: 2em;
 			}
 			
-			div {
+				body.framed {
+					background: transparent;
+					padding: 0;
+				}
+				
+				body.framed #wrapper {
+					position: absolute;
+					width: 100%;
+					bottom: 0;
+					left: 0;
+					
+				}
+			
+			#wrapper div {
 				padding: 0.5em;
 				background: #33a7d2;
 			}
@@ -264,16 +277,18 @@ SMS::Backend::HTTP::HTML = <<EOF
 		</style>
 	</head>
 	<body>
-		<div>
-			<h1>RubySMS Virtual Device</h1>
+		<div id="wrapper">
+			<div>
+				<h1>RubySMS Virtual Device</h1>
 			
-			<ul id="log">
-			</ul>
+				<ul id="log">
+				</ul>
 			
-			<form id="send" method="post">
-				<input type="text" id="msg" name="msg" />
-				<!--<input type="submit" value="Send" />-->
-			</form>
+				<form id="send" method="post">
+					<input type="text" id="msg" name="msg" />
+					<!--<input type="submit" value="Send" />-->
+				</form>
+			</div>
 		</div>
 		
 		<script type="text/javascript">
@@ -288,6 +303,14 @@ SMS::Backend::HTTP::HTML = <<EOF
 
 			} else {
 				window.addEvent("domready", function() {
+					
+					/* if this window is not the top-level
+					 * window (ie, it has been included in
+					 * an iframe), then add a body class
+					 * to style things slightly differently */
+					if (window != top) {
+						$(document.body).addClass("framed");
+					}
 					
 					// extract the session id from the URI
 					var session_id = location.pathname.replace(/[^0-9]/g, "");
@@ -347,6 +370,11 @@ SMS::Backend::HTTP::HTML = <<EOF
 										
 										log.scrollTo(0, msg_el.getPosition(log)["y"]);
 									}
+
+								/* if it was called independantly, just scroll to
+								 * the bottom of the log (Infinity doesn't work!) */
+								} else {
+									log.scrollTo(0, 9999);
 								}
 								
 								/* call again in 30 seconds, to check for
