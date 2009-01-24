@@ -15,7 +15,7 @@ end
 
 
 # all library files should live in here
-dir = File.dirname(__FILE__) + "/rubysms/"
+dir = File.dirname(__FILE__) + "/rubysms"
 
 
 # load all supporting files
