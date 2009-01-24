@@ -17,7 +17,10 @@ module SMS
 		
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
-				text = msg.text					
+				
+				# duplicate the message text before hacking
+				# it into pieces, so we don't alter the object
+				text = msg.text.dup
 				
 				# lock threads while handling this message, so we don't have
 				# to worry about being interrupted by other incoming messages
