@@ -31,22 +31,6 @@ module SMS::Backend
 			# arrays (new session) for unknown keys
 			# to avoid initializing sessions all over
 			@msg_log = {}
-			@msg_log.default = []
-			
-			# add an incoming our outgoing message to
-			# the log with a unique id, direction ("in"
-			# or "out"), and the text content (NOT an
-			# SMS::Incoming or SMS::Outgoing object)
-			def @msg_log.append(session, dir, text)
-				id = text.object_id.abs
-				self[session].push [id, dir, text]
-				id # return the ID for the webui
-			end
-			
-			# i'm so vain... i probably
-			# think this code is about me
-			def @msg_log.incoming(s,t); append(s, "in", t); end
-			def @msg_log.outgoing(s,t); append(s, "out", t); end
 		end
 
 		# Starts a thread-blocking Mongrel to serve
@@ -69,8 +53,21 @@ module SMS::Backend
 		# nothing except add it to the log, for it
 		# to be picked up next time someone looks
 		def send_sms(msg)
-			@msg_log.outgoing(msg.recipient, msg.text)
+			s = msg.recipient
+			t = msg.text
+			
+			# allow RubySMS to notify the router
+			# this is a giant ugly temporary hack
 			super
+			
+			# init the message log for
+			# this session if necessary
+			@msg_log[s] = []\
+				unless @msg_log.has_key?(s)
+			
+			# add the outgoing message to the log
+			msg_id = @msg_log[s].push\
+				[t.object_id, "out", t]
 		end
 		
 		
@@ -114,7 +111,7 @@ module SMS::Backend
 							# jumping into someone elses session (although
 							# that's allowed, if explicly requested)
 							new_session = (111111 + rand(888888)).to_s
-							break if @backend.msg_log[new_session].empty?
+							break unless @backend.msg_log.has_key?(new_session)
 						end
 					
 						return [
@@ -131,10 +128,19 @@ module SMS::Backend
 			
 					# serve GET /123456.json
 					elsif m = path.match(/^\/(\d{6})\.json$/)
+						msgs = @backend.msg_log[m.captures[0]] || []
+						
 						return [
 							200,
 							{"content-type" => "application/json"},
-							"[" + (@backend.msg_log[m.captures[0]].collect { |msg| msg.inspect }.join(", ")) + "]"]
+							"[" + (msgs.collect { |msg| msg.inspect }.join(", ")) + "]"]
+					
+					# serve GET /favicon.ico
+					# as if YOU'VE never wasted
+					# a minute on frivolous crap
+					elsif path == "/favicon.ico"
+						icon = File.dirname(__FILE__) + "/cellphone.ico"
+						return [200, {"content-type" => "image/x-ico"}, File.read(icon)]
 					end
 				
 				# serve POST /123456/send
@@ -142,9 +148,15 @@ module SMS::Backend
 					t = req.POST["msg"]
 					s = m.captures[0]
 					
+					# init the message log for
+					# this session if necessary
+					@backend.msg_log[s] = []\
+						unless @backend.msg_log.has_key?(s)
+					
 					# log the incoming message, so it shows
 					# up in the two-way "conversation" 
-					msg_id = @backend.msg_log.incoming(s, t)
+					msg_id = @backend.msg_log[s].push\
+						[t.object_id, "in", t]
 
 					# push the incoming message
 					# into RubySMS, to distribute
@@ -158,7 +170,7 @@ module SMS::Backend
 					return [
 						200,
 						{"content-type" => "text/plain" },
-						msg_id.to_s]
+						t.object_id.to_s]
 				end
 				
 				# nothing else is valid. not 404, because it might be
@@ -360,6 +372,10 @@ SMS::Backend::HTTP::HTML = <<EOF
 						 * make way for the next message */
 						$("msg").value = "";
 					});
+					
+					/* update the log now, in case there
+					 * is already anything in the log */
+					update();
 				});
 			}
 		</script>
