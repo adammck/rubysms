@@ -21,6 +21,11 @@ module SMS
 			@log.event_with_time(*args)
 		end
 		
+		def log_exception(error)
+			trace = error.backtrace.join("\n").gsub(/^/, "  ")
+			log [error.message, trace], :warn
+		end
+		
 		
 		# Starts listening for incoming messages
 		# on all backends, and never returns.
@@ -40,17 +45,17 @@ module SMS
 			# (i added "stty -echoctl" to my .bashrc)
 			trap("INT") do
 				log "Shutting down", :init
-				
+			
 				# fire the "stop" method of
 				# each application and backend
 				# before terminating the process
 				(@backends + @apps).each do |inst|
 					inst.stop
 				end
-				
+			
 				exit
 			end
-			
+		
 			# block until ctrl+c
 			while true do
 				sleep 5
@@ -85,7 +90,18 @@ module SMS
 			# notify each application of the message.
 			# they may or may not respond to it
 			@apps.each do |app|
-				app.incoming msg
+				begin
+					app.incoming msg
+				
+				# something went boom in the app
+				# log it, and continue with the next
+				rescue Interrupt => err
+					log_exception(err)
+					
+				#	if msg.responses.empty?
+				#		msg.respond("Sorry, there was an error while processing your message.")
+				#	end
+				end
 			end
 		end
 		
@@ -93,7 +109,7 @@ module SMS
 		# logs it. Should be called by all backends prior to sending.
 		def outgoing(msg)
 			log_with_time "[#{msg.backend.label}] #{msg.recipient}: #{msg.text} (#{msg.text.length})", :out
-			log("Outgoing messages exceeds 140 characters", :warn) if msg.text.length > 140
+			log("Outgoing message exceeds 140 characters", :warn) if msg.text.length > 140
 			cancelled = false
 			
 			# notify each app of the outgoing sms
