@@ -29,7 +29,14 @@ module SMS
 				Thread.exclusive do
 					services.each do |service|
 						method, pattern, priority = *service
-					
+						
+						# if the pattern is a string, then assume that
+						# it's a case-insensitive simple trigger - it's
+						# a common enough use-case to warrant an exception
+						if pattern.is_a?(String)
+							pattern = /\A#{pattern}\Z/i
+						end
+						
 						# if this pattern looks like a regex,
 						# attempt to match the incoming message
 						if pattern.respond_to?(:match)
