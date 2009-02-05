@@ -18,8 +18,8 @@ module SMS
 		def incoming(msg)
 			if services = self.class.instance_variable_get(:@services)
 				
-				# duplicate the message text before hacking
-				# it into pieces, so we don't alter the object
+				# duplicate the message text before hacking it
+				# into pieces, so we don't alter the original
 				text = msg.text.dup
 				
 				# lock threads while handling this message, so we don't have
@@ -27,46 +27,49 @@ module SMS
 				# (in theory, this shouldn't be a problem, but it turns out
 				# to be a frequent source of bugs)
 				Thread.exclusive do
-					while true
-						services.each do |service|
-							method, pattern, priority = *service
-						
-							# if this pattern looks like a regex,
-							# attempt to match the incoming message
-							if pattern.respond_to?(:match)
-								if m = pattern.match(text)
-									
-									# we have a match! log, and call
-									# the method with the captures
-									log_dispatch(method, m.captures)
-									send(method, msg, *m.captures)
-								
-									# the method accepted the text, but it may not be interested
-									# in the whole message. so crop off just the part that matched
-									text.sub!(pattern, "")
-								
-									# stop processing if we have
-									# dealt with all of the text
-									return true unless text =~ /\S/
-								
-									# there is text remaining, so
-									# (re-)start iterating services
-									# (jumps back to services.each)
-									retry
-								end
+					services.each do |service|
+						method, pattern, priority = *service
 					
-							# the special :anything pattern can be used
-							# as a default service. once this is hit, we
-							# are done processing the entire message
-							elsif pattern == :anything
-								log_dispatch(method, [text])
-								send(method, msg, text)
+						# if this pattern looks like a regex,
+						# attempt to match the incoming message
+						if pattern.respond_to?(:match)
+							if m = pattern.match(text)
 								
-								# stop processing
-								return true
+								# we have a match! attempt to
+								# dispatch it to the receiver
+								dispatch_to(method, msg, m.captures)
+							
+								# the method accepted the text, but it may not be interested
+								# in the whole message. so crop off just the part that matched
+								text.sub!(pattern, "")
+							
+								# stop processing if we have
+								# dealt with all of the text
+								return true unless text =~ /\S/
+							
+								# there is text remaining, so
+								# (re-)start iterating services
+								# (jumps back to services.each)
+								retry
 							end
-						end#each
-					end#while
+				
+						# the special :anything pattern can be used
+						# as a default service. once this is hit, we
+						# are done processing the entire message
+						elsif pattern == :anything
+							dispatch_to(method, msg, [text])
+							return true
+						
+						# we don't understand what this pattern
+						# is, or how it ended up in @services.
+						# no big deal, but log it anyway, since
+						# it indicates that *something* is awry
+						else
+							log "Invalid pattern: #{pattern.inspect}", :warn
+						end
+					end#each
+					
+					
 				end#exclusive
 			end#if
 		end
@@ -103,6 +106,28 @@ module SMS
 		end
 		
 		private
+		
+		def dispatch_to(meth_str, msg, captures)
+			log_dispatch(meth_str, captures)
+			
+			begin
+				err_line = __LINE__ + 1
+				send(meth_str, msg, *captures)
+				
+			rescue ArgumentError => err
+				
+				# if the line above (where we dispatch to the receiving
+				# method) caused the error, we'll log a more useful message
+				if (err.backtrace[0] =~ /^#{__FILE__}:#{err_line}/)
+					wanted = (method(meth_str).arity - 1)
+					problem = (captures.length > wanted) ? "Too many" : "Not enough"
+					log "#{problem} captures (wanted #{wanted}, got #{captures.length})", :warn
+					
+				else
+					raise
+				end
+			end
+		end
 		
 		# Adds a log message detailing which method is being
 		# invoked, with which arguments (if any)

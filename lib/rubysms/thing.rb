@@ -30,5 +30,9 @@ module SMS
 		def log_with_time(*args)
 			router.log_with_time(*args)
 		end
+		
+		def log_exception(error)
+			router.log_exception(*args)
+		end
 	end
 end

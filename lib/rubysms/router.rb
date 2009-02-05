@@ -22,8 +22,23 @@ module SMS
 		end
 		
 		def log_exception(error)
-			trace = error.backtrace.join("\n").gsub(/^/, "  ")
-			log [error.message, trace], :warn
+			msgs = [error.class, error.message]
+			
+			# add each line until the current frame is within
+			# rubysms (the remainder will just be from gems)
+			catch(:done) do
+				error.backtrace.each do |line|
+					if line =~ /^#{SMS::Root}/
+						throw :done
+					end
+					
+					# still within the application,
+					# so add the frame to the log
+					msgs.push("  " + line)
+				end
+			end
+			
+			@log.event msgs, :warn
 		end
 		
 		
@@ -95,7 +110,7 @@ module SMS
 				
 				# something went boom in the app
 				# log it, and continue with the next
-				rescue Interrupt => err
+				rescue StandardError => err
 					log_exception(err)
 					
 				#	if msg.responses.empty?
@@ -115,7 +130,7 @@ module SMS
 			# notify each app of the outgoing sms
 			# note that the sending can still fail
 			@apps.each do |app|
-					app.outgoing msg
+				app.outgoing msg
 			end
 		end
 	end

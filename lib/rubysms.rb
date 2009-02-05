@@ -11,14 +11,17 @@ Thread.current["name"] = "main"
 # everything (should) live
 # in this tidy namespace
 module SMS
+	
+	# store this directory name; everything
+	# inside here is considered to be part
+	# of the rubysms framework, so can be
+	# ignored in application backtraces
+	Root = File.dirname(__FILE__)
 end
 
 
-# all library files should live in here
-dir = File.dirname(__FILE__) + "/rubysms"
-
-
 # load all supporting files
+dir = SMS::Root + "/rubysms"
 require "#{dir}/logger.rb"
 require "#{dir}/router.rb"
 require "#{dir}/thing.rb"
