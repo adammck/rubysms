@@ -7,6 +7,14 @@ module SMS::Backend
 	# however many SmsApp classes are created
 	# and run, only a single instance can access
 	# the GSM modem at once: this is the instance
+	
+	
+	# Provides an interface between RubyGSM and RubySMS,
+	# which allows RubySMS to send real SMS in an abstract
+	# fashion, which can be replicated by other backends.
+	# This backend is probably the thinnest layer between
+	# applications and the network, since the backend API
+	# (first implemented here) was based on RubyGSM.
 	class GSM < Base
 		
 		# just store the arguments until the
