@@ -3,15 +3,19 @@
 
 
 module SMS
-	class Outgoing < Gsm::Outgoing
-		attr_accessor :in_response_to
-		attr_reader :backend
+	class Outgoing
+		attr_accessor :recipient, :text, :in_response_to
+		attr_reader :backend, :sent
 		
-		def initialize(backend, *rest)
+		def initialize(backend, recipient=nil, text=nil)
 			@backend = backend
-			super(nil, *rest)
+			@recipient = recipient
+			@text = text
 		end
 		
+		# Sends the message via _@backend_ NOW, and
+		# prevents any further modifications to self,
+		# to avoid the object misrepresenting reality.
 		def send!
 			backend.send_sms(self)
 			@sent = Time.now

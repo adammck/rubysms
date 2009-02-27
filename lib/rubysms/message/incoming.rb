@@ -3,14 +3,29 @@
 
 
 module SMS
-	class Incoming < Gsm::Incoming
+	class Incoming
+		attr_reader :sender, :sent, :received, :text
 		attr_reader :backend, :responses
-		attr_writer :text
 		
-		def initialize(backend, *rest)
+		def initialize(backend, sender, sent, text)
+			
+			# move all arguments into read-only
+			# attributes. ugly, but Struct only
+			# supports read/write attrs
 			@backend = backend
+			@sender = sender
+			@sent = sent
+			@text = text
+			
+			# assume that the message was
+			# received right now, since we
+			# don't have an incoming buffer
+			@received = Time.now
+			
+			# initialize a place for responses
+			# to this message to live, to be
+			# extracted (for logging?) later
 			@responses = []
-			super(nil, *rest)
 		end
 		
 		def respond(response_text)
