@@ -28,6 +28,7 @@ require "#{dir}/thing.rb"
 require "#{dir}/application.rb"
 require "#{dir}/backend.rb"
 require "#{dir}/errors.rb"
+require "#{dir}/person.rb"
 
 
 # include RubyGSM via the gem. we need this regardless

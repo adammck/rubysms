@@ -53,7 +53,7 @@ module SMS::Backend
 		# nothing except add it to the log, for it
 		# to be picked up next time someone looks
 		def send_sms(msg)
-			s = msg.recipient
+			s = msg.recipient.phone_number
 			t = msg.text
 			
 			# allow RubySMS to notify the router

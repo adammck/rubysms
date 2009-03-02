@@ -31,6 +31,17 @@ class DemoApp < SMS::App
 	end
 	
 	
+	# this method uses the msg.sender object to keep volitile state (which is
+	# only stored per-process) to demonstrate how applications can implement
+	# lightweight sessions over sms.
+	
+	serve /count/
+	def count(msg)
+		msg.sender[:count] = msg.sender[:count].to_i + 1
+		msg.respond "You've said that #{msg.sender[:count]} times!"
+	end
+	
+	
 	# this method deliberately causes a runtime error if the message (or the
 	# remainder of a message, if some has already been parsed!) starts with
 	# the word "error", to demonstrate the rolling error log.

@@ -24,7 +24,7 @@ module SMS::Backend
 		end
 		
 		def send_sms(msg)
-			to = msg.recipient
+			to = msg.recipient.phone_number
 			super
 			
 			# if this is the first time that we

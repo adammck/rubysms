@@ -4,8 +4,8 @@
 
 module SMS
 	class Incoming
-		attr_reader :sender, :sent, :received, :text
-		attr_reader :backend, :responses
+		attr_reader :sent, :received, :text
+		attr_reader :backend, :sender, :responses
 		
 		def initialize(backend, sender, sent, text)
 			
@@ -13,9 +13,13 @@ module SMS
 			# attributes. ugly, but Struct only
 			# supports read/write attrs
 			@backend = backend
-			@sender = sender
 			@sent = sent
 			@text = text
+			
+			# Sets @sender, transforming _sender_ into an SMS::Person if
+			# it isn't already (to enable persistance between :Outgoing
+			# and/or SMS::Incoming objects)
+			@sender = sender.is_a?(SMS::Person) ? sender : SMS::Person.fetch(backend, sender)
 			
 			# assume that the message was
 			# received right now, since we
@@ -28,11 +32,22 @@ module SMS
 			@responses = []
 		end
 		
-		def respond(response_text)
+		# Creates an SMS::Outgoing object, adds it to _@responses_, and links
+		# it back to this SMS::Incoming object via Outgoing#in_response_to.
+		# IMPORTANT: This method doesn't actually SEND the message, it just
+		# creates it - use Incoming#respond to create an send in one call.
+		# This is most useful when you want to quickly create a response,
+		# modify it a bit, and send it.
+		def create_response(response_text)
 			og = SMS::Outgoing.new(backend, sender, response_text)
 			og.in_response_to = self
 			@responses.push(og)
-			og.send!
+			og
+		end
+		
+		# Same as Incoming#respond, but also sends the message.
+		def respond(response_text)
+			create_response(response_text).send!
 		end
 	end
 end

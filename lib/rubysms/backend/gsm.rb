@@ -67,7 +67,7 @@ module SMS::Backend
 			# send the message to the modem via rubygsm, and log
 			# if it failed. TODO: needs moar info from rubygsm
 			# on *why* sending failed
-			unless @gsm.send_sms(msg.recipient, msg.text)
+			unless @gsm.send_sms(msg.recipient.phone_number, msg.text)
 				log "Message sending FAILED", :warn
 			end
 		end
