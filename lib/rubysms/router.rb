@@ -53,6 +53,11 @@ module SMS
 					b.start
 				end
 			end
+			
+			# applications don't need their own
+			# thread (they're notified in serial),
+			# but do have a #start method
+			@apps.each { |a| a.start }
 
 			# catch interrupts and display a nice message (rather than
 			# a backtrace). to avoid seeing control characters (^C) in
