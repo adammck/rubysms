@@ -26,12 +26,17 @@ module SMS
 		end
 		
 		
-		attr_reader :backend, :key, :data
+		attr_reader :backend, :key
 		
 		def initialize(backend, key)
 			@backend = backend
 			@key = key
-			@data = {}
+		end
+		
+		# Return this person is a vaguely useful
+		# way that doesn't look too out of place.
+		def to_s
+			"#<SMS::Person backend=#{backend.label}, key=#{key}>"
 		end
 		
 		# wat
