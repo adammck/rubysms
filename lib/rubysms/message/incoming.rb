@@ -49,5 +49,10 @@ module SMS
 		def respond(response_text)
 			create_response(response_text).send!
 		end
+		
+		# Returns the phone number of the sender of this message.
+		def phone_number
+			sender.phone_number
+		end
 	end
 end

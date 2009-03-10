@@ -31,5 +31,10 @@ module SMS
 			# more modifications
 			freeze
 		end
+		
+		# Returns the phone number of the recipient of this message.
+		def phone_number
+			recipient.phone_number
+		end
 	end
 end
