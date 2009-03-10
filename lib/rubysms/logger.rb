@@ -7,10 +7,10 @@ module SMS
 			@stream = stream
 		end
 		
-		def event(msg, type=:info)
+		def event(str, type=:info)
 			
 			# arrays or strings are fine. quack!
-			msg = msg.join("\n") if msg.respond_to?(:join)
+			str = str.join("\n") if str.respond_to?(:join)
 			
 			# each item in the log is prefixed by a four-char
 			# coloured prefix block, to help scanning by eye
@@ -21,11 +21,11 @@ module SMS
 			# the prefix, so indent subsequent lines by an
 			# equal amount of space, to keep them lined up
 			indent = colored((" " * prefix_text.length), type) + " "
-			@stream.puts prefix + " " + msg.gsub("\n", "\n#{indent}")
+			@stream.puts prefix + " " + str.to_s.gsub("\n", "\n#{indent}")
 		end
 		
-		def event_with_time(msg, *rest)
-			event("#{time_log(Time.now)} #{msg}", *rest)
+		def event_with_time(str, *rest)
+			event("#{time_log(Time.now)} #{str}", *rest)
 		end
 
 		private
