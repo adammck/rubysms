@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # vim: noet
 
+
 # include rubysms relative to this, rather
 # than the rubygem, for the time being
 require File.expand_path(
@@ -63,6 +64,21 @@ class DemoApp < SMS::App
 end
 
 
-# start serving this just this app in development mode, with HTTP and DRB
-# backends. in production, you'd probably want to serve multiple apps
-DemoApp.serve!
+# if this file is being executed directly,
+# rather than included, start serving
+if __FILE__ == $0
+
+	# create a rubysms router, which receives incoming messages from the
+	# backend(s), notifies each app, and (maybe)sends back the response
+	router = SMS::Router.new
+
+	# init and register the backends
+	router.add SMS::Backend::HTTP.new
+	router.add SMS::Backend::DRB.new
+
+	# and the application(s)
+	router.add DemoApp.new
+
+	# start serving
+	router.serve_forever
+end
