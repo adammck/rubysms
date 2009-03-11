@@ -31,7 +31,7 @@ module SMS
 			router.log_with_time(*args)
 		end
 		
-		def log_exception(error)
+		def log_exception(*args)
 			router.log_exception(*args)
 		end
 	end

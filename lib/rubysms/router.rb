@@ -3,6 +3,9 @@
 
 module SMS
 	class Router
+		attr_reader :apps, :backends
+		
+		
 		def initialize
 			@log = Logger.new(STDOUT)
 			@backends = []
@@ -21,8 +24,15 @@ module SMS
 			@log.event_with_time(*args)
 		end
 		
-		def log_exception(error)
+		def log_exception(error, prefix_message=nil)
 			msgs = [error.class, error.message]
+			
+			# if a prefix was provided (to give a litle
+			# more info on what went wrong), prepend it
+			# to the output with a blank line
+			unless prefix_message.nil?
+				msg.shift prefix_message, ""
+			end
 			
 			# add each line until the current frame is within
 			# rubysms (the remainder will just be from gems)
@@ -105,7 +115,7 @@ module SMS
 		# Relays a given incoming message from a
 		# specific backend to all applications.
 		def incoming(msg)
-			log_with_time "[#{msg.backend.label}] #{msg.sender}: #{msg.text} (#{msg.text.length})", :in
+			log_with_time "[#{msg.backend.label}] #{msg.sender.key}: #{msg.text} (#{msg.text.length})", :in
 			
 			# notify each application of the message.
 			# they may or may not respond to it
@@ -128,7 +138,7 @@ module SMS
 		# Notifies each application of an outgoing message, and
 		# logs it. Should be called by all backends prior to sending.
 		def outgoing(msg)
-			log_with_time "[#{msg.backend.label}] #{msg.recipient}: #{msg.text} (#{msg.text.length})", :out
+			log_with_time "[#{msg.backend.label}] #{msg.recipient.key}: #{msg.text} (#{msg.text.length})", :out
 			log("Outgoing message exceeds 140 characters", :warn) if msg.text.length > 140
 			cancelled = false
 			
