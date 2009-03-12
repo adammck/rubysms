@@ -22,6 +22,10 @@ module SMS
 			# equal amount of space, to keep them lined up
 			indent = colored((" " * prefix_text.length), type) + " "
 			@stream.puts prefix + " " + str.to_s.gsub("\n", "\n#{indent}")
+			
+			# flush immediately, to prevent
+			# the log being backend up
+			@stream.flush
 		end
 		
 		def event_with_time(str, *rest)
