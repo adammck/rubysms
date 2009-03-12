@@ -5,14 +5,53 @@ module SMS
 	class App < Thing
 		
 		# Creates and starts a router to serve only
-		# this application using the offline DRB and
-		# HTTP backends. Handy during development.
-		def self.serve!
-			r = SMS::Router.new
-			r.add SMS::Backend::HTTP.new
-			r.add SMS::Backend::DRB.new
-			r.add self.new
-			r.serve_forever
+		# this application. Handy during development.
+		#
+		# This method accepts an arbitrary number of
+		# backends, each of which can be provided in
+		# numerous ways. This is kind of hard to wrap
+		# one's head around, but makes us super flexible.
+		# TODO: this magic will all be moved to the
+		#       router, one day, so multiple apps
+		#       can take advantage of it.
+		#
+		#   # start the default backends
+		#   # (one http, and one drb)
+		#   App.serve!
+		# 
+		#   # just the http backend
+		#   App.serve!(:HTTP)
+		#   
+		#   # the http backend... with configuration option(s)!
+		#   # (in this case, a port). it's got to be an array,
+		#   # so we know that we're referring to one single
+		#   # backend here, not two "HTTP" and "8080" backends
+		#   App.serve!([:HTTP, 8080])
+		#   
+		#   # two GSM backends on separate ports
+		#   App.serve!([:GSM, "/dev/ttyS0"], [:GSM, "/dev/ttyS1"])
+		#
+		# You may notice that these arguments resemble the
+		# config options from the Malawi RapidSMS project...
+		# this is not a co-incidence.
+		def self.serve!(*backends)
+			
+			# if no backends were explicitly requested,
+			# default to the HTTP + DRB offline backends
+			backends = [:HTTP, :DRB] if\
+				backends.empty?
+			
+			# create a router, and attach each new backend
+			# in turn. because ruby's *splat operator is so
+			# clever, each _backend_ can be provided in many
+			# ways - see this method's docstring.
+			router = SMS::Router.new
+			backends.each do |backend|
+				SMS::Backend.spawn(router, *backend)
+			end
+			
+			router.add(self.new)
+			router.serve_forever
 		end
 		
 		def incoming(msg)

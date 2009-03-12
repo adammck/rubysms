@@ -24,8 +24,9 @@ module SMS::Backend
 		MT_URL = "http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js"
 		attr_reader :msg_log
 		
-		def initialize(mootools_url=MT_URL)
+		def initialize(port=HTTP_PORT, mootools_url=MT_URL)
 			@app = RackApp.new(self, mootools_url)
+			@port = port
 			
 			# initialize the log, which returns empty
 			# arrays (new session) for unknown keys
@@ -39,12 +40,12 @@ module SMS::Backend
 			
 			# add a screen log message, which is kind of
 			# a lie, because we haven't started anything yet
-			uri = "http://localhost:#{HTTP_PORT}"
+			uri = "http://localhost:#{@port}"
 			log ["Started HTTP Offline Backend", "URI: #{uri}"], :init
 			
 			# this is goodbye
 			Rack::Handler::Mongrel.run(
-				@app, :Port=>HTTP_PORT)
+				@app, :Port=>@port)
 		end
 		
 		# outgoing message from RubySMS (probably
