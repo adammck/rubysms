@@ -2,13 +2,12 @@ RubySMS is a Ruby library (not a framework, although it's coming dangerously clo
 which aims to make developing and deploying SMS applications easy. The sending and
 receiving of "real" SMS is handled by RubyGSM[http://github.com/adammck/rubygsm],
 but RubySMS also provides a couple of ways to interact with "mock" SMS via a web
-interface (HTTP Backend) and GTK GUI (DRB backend).
+interface (the HTTP Backend) and GTK GUI (the DRB backend).
 
 RubySMS was initially developed in Malawi by {The UNICEF Innovation Team}[http://unicefinnovation.org/about.php]
 and a group from Columbia University's {SIPA}[http://sipa.columbia.edu/] as the technical foundation of the 
 {RapidSMS Child Malnutrition Survelliance}[http://netsquared.org/projects/child-malnutrition-surveillance-and-famine-response]
-(see {the source code}[http://github.com/adammck/columbawawi]) entry to the {USAID Development 2.0 Challenge}[http://netsquared.org/usaid]...
-
+(see {the source code}[http://github.com/adammck/columbawawi]) entry to the {USAID Development 2.0 Challenge}[http://netsquared.org/usaid]... 
 which[http://globaldevelopmentcommons.net/node/876]
 we[http://unicef.org/infobycountry/usa_47068.html]
 won[http://sipa.columbia.edu/news_events/announcements/sipanews10.html].
@@ -16,65 +15,55 @@ won[http://sipa.columbia.edu/news_events/announcements/sipanews10.html].
 
 === Sample Application
 
-require "rubygems"
-require "rubysms"
+  require "rubygems"
+  require "rubysms"
 
-class DemoApp < SMS::App
-	
-	
-	# if the word "test" is received, this method is called with the incoming msg
-	# object (see lib/rubysms/message/incoming.rb and lib/rubygsm/msg/incoming.rb)
-	# as the lone argument. like rubygsm, this object has a handy Incoming#respond
-	# method, which makes two-way SMS communication easy as pie.
-	
-	serve "test"
-	def test(msg)
-		msg.respond "This is a test"
-	end
-	
-	
-	# if anything containing the word "help" is received, this method is called,
-	# and (unless :halt is thrown!) dispatching will restart with the remainder
-	# of the message (the part that *wasn't* matched).
-	
-	serve /help/
-	def help(msg)
-		SMS::Outgoing.new(msg.backend, msg.sender, "I can't help you").send!
-	end
-	
-	
-	# this method uses the msg.sender object to keep volitile state (which is
-	# only stored per-process) to demonstrate how applications can implement
-	# lightweight sessions over sms.
-	
-	serve /count/
-	def count(msg)
-		msg.sender[:count] = msg.sender[:count].to_i + 1
-		msg.respond "You've said that #{msg.sender[:count]} times!"
-	end
-	
-	
-	# this method deliberately causes a runtime error if the message (or the
-	# remainder of a message, if some has already been parsed!) starts with
-	# the word "error", to demonstrate the rolling error log.
-	
-	serve /^error/
-	def runtime_error(msg)
-		this_doesnt_exist
-	end
-	
-	
-	# if no other service matches the incoming message,
-	# or there is text left over by other services, this
-	# method is called. the name "default" is irrelevant.
-	
-	serve :anything
-	def default(msg, text)
-		msg.respond "I don't understand: #{text.strip.inspect}"
-	end
-end
+  class DemoApp < SMS::App
 
-DemoApp.serve!
+
+    # if the word "test" is received, this method is called with the incoming msg
+    # object (see lib/rubysms/message/incoming.rb and lib/rubygsm/msg/incoming.rb)
+    # as the lone argument. like rubygsm, this object has a handy Incoming#respond
+    # method, which makes two-way SMS communication easy as pie.
+
+    serve "test"
+    def test(msg)
+      msg.respond "This is a test"
+    end
+
+
+    # if anything containing the word "help" is received, this method is called,
+    # and (unless :halt is thrown!) dispatching will restart with the remainder
+    # of the message (the part that *wasn't* matched).
+
+    serve /help/
+    def help(msg)
+      SMS::Outgoing.new(msg.backend, msg.sender, "I can't help you").send!
+    end
+
+
+    # this method uses the msg.sender object to keep volitile state (which is
+    # only stored per-process) to demonstrate how applications can implement
+    # lightweight sessions over sms.
+
+    serve /count/
+    def count(msg)
+      msg.sender[:count] = msg.sender[:count].to_i + 1
+      msg.respond "You've said that #{msg.sender[:count]} times!"
+    end
+
+
+    # if no other service matches the incoming message,
+    # or there is text left over by other services, this
+    # method is called. the name "default" is irrelevant.
+
+    serve :anything
+    def default(msg, text)
+      msg.respond "I don't understand: #{text.strip.inspect}"
+    end
+  end
+
+  DemoApp.serve!
 
 
 === Installing
@@ -95,4 +84,6 @@ that some time).
 
   $ sudo gem install rack mongrel
 
-If you'd like to send real SMS via a GSM modem, you'll also need RubyGSM
+If you'd like to send real SMS via a GSM modem, you'll also need RubyGSM:
+
+  $ sudo gem install adammck-rubygsm

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
+#:title:RubySMS
+#--
 # vim: noet
+#++
 
 
 # during development, it's important to EXPLODE
