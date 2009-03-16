@@ -71,11 +71,9 @@ if __FILE__ == $0
 	# create a rubysms router, which receives incoming messages from the
 	# backend(s), notifies each app, and (maybe)sends back the response
 	router = SMS::Router.new
-
-	# init and register the backends
-	router.add SMS::Backend::HTTP.new
-	router.add SMS::Backend::DRB.new
-
+	router.add_backend(:HTTP)
+	router.add_backend(:DRB)
+	
 	# and the application(s)
 	router.add DemoApp.new
 

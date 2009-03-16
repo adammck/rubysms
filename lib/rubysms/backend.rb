@@ -3,15 +3,40 @@
 
 
 module SMS::Backend
-		
+	
 	# TODO: doc
 	def self.create(klass, label=nil, *args)
-
+	
 		# if a class name was passed (rather
-		# than a real class), resolve it
-		klass = SMS::Backend.const_get(klass) unless\
-			klass.is_a?(Class)
-
+		# than a real class), attempt to load
+		# the ruby source, and resolve the name
+		unless klass.is_a?(Class)
+			begin
+				src = File.dirname(__FILE__) +\
+					"/backend/#{klass.to_s.downcase}.rb"
+				require src
+			
+			# if the backend couldn't be required, re-
+			# raise the error with a more useful message
+			rescue LoadError
+				raise LoadError.new(
+					"Couldn't load #{klass.inspect} " +\
+					"backend from: #{src}")
+			end
+			
+			begin
+				klass = SMS::Backend.const_get(klass)
+			
+			# if the constant couldn't be found,
+			# re-raise with a more useful message
+			rescue NameError
+				raise LoadError.new(
+					"Loaded #{klass.inspect} backend from " +\
+					"#{src}, but the SMS::Backend::#{klass} "+\
+					"class was not defined")
+			end
+		end
+		
 		# create an instance of this backend,
 		# passing along the (optional) arguments
 		inst = klass.new(*args)
@@ -23,16 +48,6 @@ module SMS::Backend
 		
 		inst
 	end
-	
-	# Create a new backend instance, and add it to the
-	# _router_ in a single call. The arguments are passed
-	# straight on to SMS::Backend::create, so check
-	# that out for documentation.
-	def self.spawn(router, *args)
-		backend = create(*args)
-		router.add(backend)
-	end
-	
 	
 	class Base < SMS::Thing
 		

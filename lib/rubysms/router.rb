@@ -112,6 +112,48 @@ module SMS
 			something.router = self
 		end
 		
+		# Adds an SMS application (which is usually an instance of a subclass
+		# of SMS::App, but anything's fine, so long as it quacks the right way)
+		# to this router, which will be started once _serve_forever_ is called.
+		def add_app(app)
+			@apps.push(app)
+			app.router = self
+		end
+		
+		# Adds an SMS backend (which MUST be is_a?(SMS::Backend::Base), for now),
+		# or a symbol representing a loadable SMS backend, which is passed on to
+		# SMS::Backend.create (along with *args) to be required and initialized.
+		# This only really works with built-in backends, for now, but is useful
+		# for initializing those:
+		#
+		#   # start serving with a single
+		#   # http backend on port 9000
+		#   router = SMS::Router.new
+		#   router.add_backend(:HTTP, 9000)
+		#   router.serve_forever
+		#
+		#   # start serving on two gsm
+		#   # modems with pin numbers
+		#   router = SMS::Router.new
+		#   router.add_backend(:GSM, "/dev/ttyS0", 1234)
+		#   router.add_backend(:GSM, "/dev/ttyS1", 5678)
+		#   router.serve_forever
+		def add_backend(backend, *args)
+			
+			# if a backend object was given, add it to this router
+			# TODO: this modifies the argument just slightly. would
+			# it be better to duplicate the object first?
+			if backend.is_a?(SMS::Backend::Base)
+				@backends.push(backend)
+				backend.router = self
+			
+			# if it's a named backend, spawn it (along
+			# with the optional arguments) and recurse
+			elsif backend.is_a?(Symbol)
+				add_backend SMS::Backend.create(backend, *args)
+			end
+		end
+		
 		# Relays a given incoming message from a
 		# specific backend to all applications.
 		def incoming(msg)

@@ -2,6 +2,38 @@
 # vim: noet
 
 
+# attempt to load rubygsm using relative paths first,
+# so we can easily run on the trunk by cloning from
+# github. the dir structure should look something like:
+#
+# projects
+#  - rubygsms
+#  - rubygsm
+begin
+	dev_dir = "#{dir}/../../../rubygsm"
+	dev_path = "#{dev_dir}/lib/rubygsm.rb"
+	require File.expand_path(dev_path)
+	
+rescue LoadError
+	begin
+	
+		# couldn't load via relative
+		# path, so try loading the gem
+		require "rubygems"
+		require "rubygsm"
+		
+	rescue LoadError
+		
+		# nothing worked, so re-raise
+		# with more useful information
+		raise LoadError.new(
+			"Couldn't load RubyGSM relatively (tried: " +\
+			"#{dev_path.inspect}) or via RubyGems")
+		
+	end
+end
+
+
 module SMS::Backend
 	
 	# Provides an interface between RubyGSM and RubySMS,
