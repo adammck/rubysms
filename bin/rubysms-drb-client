@@ -10,8 +10,16 @@ class SmsGui
 	attr :glade
 	
 	def initialize
-		dir = File.dirname(__FILE__)
-		@glade = GladeXML.new("#{dir}/smsgui.glade") do |handler|
+		
+		# if this file is a symlink (which is probably is, since rubygems
+		# automatically symlinks bin files into /usr/bin), find the original
+		# source file, so we can find the glade src relatively
+		this_file = File.symlink?(__FILE__) ? \
+			File.readlink(__FILE__) : __FILE__
+		
+		# find and load up the glade src for the gui
+		glade_src = File.expand_path(File.dirname(this_file) + "/../lib/drb-client.glade")
+		@glade = GladeXML.new(glade_src) do |handler|
 			method(handler)
 		end
 		

@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 	s.name     = "rubysms"
-	s.version  = "0.8"
-	s.date     = "2009-03-12"
+	s.version  = "0.8.1"
+	s.date     = "2009-03-16"
 	s.summary  = "Develop and deploy SMS applications with Ruby"
 	s.email    = "amckaig@unicef.org"
 	s.homepage = "http://github.com/adammck/rubysms"
@@ -14,8 +14,8 @@ Gem::Specification.new do |s|
 		"lib/rubysms.rb",
 		
 		# gtk gui
-		"gui/smsgui.glade",
-		"gui/smsgui.rb",
+		"bin/rubysms-drb-client",
+		"lib/drb-client.glade",
 		
 		# core
 		"lib/rubysms/application.rb",
@@ -37,7 +37,9 @@ Gem::Specification.new do |s|
 		"lib/rubysms/message/outgoing.rb",
 	]
 	
-	s.executables = []
+	s.executables = [
+		"rubysms-drb-client"
+	]
 	
 	s.add_dependency("adammck-rubygsm")
 	s.add_dependency("mongrel")
