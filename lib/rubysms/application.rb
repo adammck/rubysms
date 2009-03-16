@@ -47,10 +47,10 @@ module SMS
 			# ways - see this method's docstring.
 			router = SMS::Router.new
 			backends.each do |backend|
-				SMS::Backend.spawn(router, *backend)
+				router.add_backend(*backend)
 			end
 			
-			router.add(self.new)
+			router.add_app(self.new)
 			router.serve_forever
 		end
 		
