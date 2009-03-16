@@ -75,7 +75,7 @@ if __FILE__ == $0
 	router.add_backend(:DRB)
 	
 	# and the application(s)
-	router.add DemoApp.new
+	router.add_app DemoApp.new
 
 	# start serving
 	router.serve_forever

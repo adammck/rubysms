@@ -94,7 +94,11 @@ module SMS
 		
 		# Accepts an SMS::Backend::Base or SMS::App instance,
 		# which is stored until _serve_forever_ is called.
+		# DEPRECATED because it's confusing and magical.
 		def add(something)
+			log "Router#add is deprecated; use " +\
+			    "#add_backend and #add_app", :warn
+			
 			if something.is_a? SMS::Backend::Base
 				@backends.push(something)
 			
