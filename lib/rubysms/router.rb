@@ -27,13 +27,6 @@ module SMS
 		def log_exception(error, prefix_message=nil)
 			msgs = [error.class, error.message]
 			
-			# if a prefix was provided (to give a litle
-			# more info on what went wrong), prepend it
-			# to the output with a blank line
-			unless prefix_message.nil?
-				msg.shift prefix_message, ""
-			end
-			
 			# add each line until the current frame is within
 			# rubysms (the remainder will just be from gems)
 			catch(:done) do
@@ -45,6 +38,15 @@ module SMS
 					# still within the application,
 					# so add the frame to the log
 					msgs.push("  " + line)
+				end
+			end
+			
+			# if a prefix was provided (to give a litle
+			# more info on what went wrong), prepend it
+			# to the output and indent the rest
+			unless prefix_message.nil?
+				msgs = [prefix_message] + msgs.collect do |msg|
+					"  " + msg.to_s
 				end
 			end
 			
@@ -74,7 +76,7 @@ module SMS
 			# the output, disable the "echoctl" option in your terminal
 			# (i added "stty -echoctl" to my .bashrc)
 			trap("INT") do
-				log "Shutting down", :init
+				log "Shutting down", :stop
 			
 				# fire the "stop" method of
 				# each application and backend
@@ -142,8 +144,9 @@ module SMS
 		#   router.add_backend(:GSM, "/dev/ttyS0", 1234)
 		#   router.add_backend(:GSM, "/dev/ttyS1", 5678)
 		#   router.serve_forever
+		#
 		def add_backend(backend, *args)
-			
+				
 			# if a backend object was given, add it to this router
 			# TODO: this modifies the argument just slightly. would
 			# it be better to duplicate the object first?
@@ -153,8 +156,15 @@ module SMS
 			
 			# if it's a named backend, spawn it (along
 			# with the optional arguments) and recurse
-			elsif backend.is_a?(Symbol)
-				add_backend SMS::Backend.create(backend, *args)
+			elsif backend.is_a?(Symbol) or backend.is_a?(String)
+				add_backend SMS::Backend.create(backend.to_sym, nil, *args)
+			
+			# no idea what this
+			# backend is = boom
+			else
+				raise RuntimeError,
+					"Router#add_backend doesn't know what " +\
+					"to do with #{backend} (#{backend.klass})"
 			end
 		end
 		
@@ -168,12 +178,12 @@ module SMS
 			@apps.each do |app|
 				begin
 					app.incoming msg
-				
+					
 				# something went boom in the app
 				# log it, and continue with the next
 				rescue StandardError => err
 					log_exception(err)
-					
+				
 				#	if msg.responses.empty?
 				#		msg.respond("Sorry, there was an error while processing your message.")
 				#	end

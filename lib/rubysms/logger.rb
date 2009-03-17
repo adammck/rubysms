@@ -54,6 +54,7 @@ module SMS
 		
 		LogColors = {
 			:init => 46,
+			:stop => 44,
 			:info => 40,
 			:warn => 41,
 			:err  => 41,
