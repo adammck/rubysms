@@ -82,8 +82,7 @@ module SMS::Backend
 			log [
 				"Started #{label} Backend",
 				"  Signal strength: #{str}",
-				"  Port: #{@gsm.port}",
-				"  Band: #{@gsm.band}MHz"
+				"  Port: #{@gsm.port}"
 			], :init
 		end
 		
