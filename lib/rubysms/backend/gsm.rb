@@ -53,40 +53,38 @@ module SMS::Backend
 		end
 		
 		def start
-			
-			# lock the threads during modem initialization,
-			# simply to avoid the screen log being mixed up
-			Thread.exclusive do
-				begin
-					@gsm = ::Gsm::Modem.new(@port)
-					@gsm.use_pin(@pin) unless @pin.nil?
-					@gsm.receive method(:incoming)
-					
-					#bands = @gsm.bands_available.join(", ")
-					#log "Using GSM Band: #{@gsm.band}MHz"
-					#log "Modem supports: #{bands}"
-					
-					log "Waiting for GSM network..."
-					str = @gsm.wait_for_network
-					log "Signal strength is: #{str}"
-					
-				# couldn't open the port. this usually means
-				# that the modem isn't plugged in to it...
-				rescue Errno::ENOENT, ArgumentError
-					log "Couldn't open #{@port}", :err
-					raise IOError
-					
-				# something else went wrong
-				# while initializing the modem
-				rescue ::Gsm::Modem::Error => err
-					log ["Couldn't initialize the modem",
-						   "RubyGSM Says: #{err.desc}"], :err
-					raise RuntimeError
-				end
+			begin
+				@gsm = ::Gsm::Modem.new(@port)
+				@gsm.use_pin(@pin) unless @pin.nil?
+				@gsm.receive method(:incoming)
+				str = @gsm.wait_for_network
 				
-				# rubygsm didn't blow up?!
-				log "Started GSM Backend", :init
+				#bands = @gsm.bands_available.join(", ")
+				#log "Modem supports: #{bands}"
+				
+			# couldn't open the port. this usually means
+			# that the modem isn't plugged in to it...
+			rescue Errno::ENOENT, ArgumentError => err
+				log_exception err,\
+					"Couldn't connect to " +\
+					"modem on port: #{@port}"
+				
+			# something else went wrong
+			# while initializing the modem
+			rescue ::Gsm::Modem::Error => err
+				log_exception err,\
+					"Couldn't initialize the " +\
+					"modem on port: #{@port}"
 			end
+			
+			# nothing went wrong this time
+			# so dump some useful info
+			log [
+				"Started #{label} Backend",
+				"  Signal strength: #{str}",
+				"  Port: #{@gsm.port}",
+				"  Band: #{@gsm.band}MHz"
+			], :init
 		end
 		
 		def send_sms(msg)
@@ -95,8 +93,11 @@ module SMS::Backend
 			# send the message to the modem via rubygsm, and log
 			# if it failed. TODO: needs moar info from rubygsm
 			# on *why* sending failed
-			unless @gsm.send_sms(msg.recipient.phone_number, msg.text)
-				log "Message sending FAILED", :warn
+			begin
+				@gsm.send_sms!(msg.recipient.phone_number, msg.text)
+				
+			rescue => err
+				log_exception err, "Message sending FAILED"
 			end
 		end
 		
