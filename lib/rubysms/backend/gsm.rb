@@ -10,6 +10,7 @@
 #  - rubygsms
 #  - rubygsm
 begin
+	dir = File.dirname(__FILE__)
 	dev_dir = "#{dir}/../../../rubygsm"
 	dev_path = "#{dev_dir}/lib/rubygsm.rb"
 	require File.expand_path(dev_path)
