@@ -62,13 +62,42 @@ module SMS
 			router.serve_forever
 		end
 		
-		def self.priority=(level)
-			@priority = level
-		end
+		# Sets or returns the priority of this application **class**. Returning
+		# this value isn't tremendously useful by itself, and mostly exists for
+		# the sake of completeness, and to be called by Application#priority.
+		# The value returned is obtained by finding the first ancestor of this
+		# class which has a @priority (yes, it looks inside other classes
+		# instance variables. I'm sorry.), and converts it to a number via
+		# the SMS::App::NAMED_PRIORITY constant.
+		#
+		#   class One < SMS::App
+		#     priority :high
+		#   end
+		#   
+		#   class Two < One
+		#   end
+		#   
+		#   class Three < Two
+		#     priority 36
+		#   end
+		#
+		#   One.priority   => 90 # set via NAMED_PRIORITY
+		#   Two.priority   => 90 # inherited from One
+		#   Three.priority => 36 # set literally
+		#
+		def self.priority(priority=nil)
 		
-		def self.priority
+			# set the priority of this class if an argument
+			# were provided, and allow execution to continue
+			# to check it's validity
+			unless priority.nil?
+				@priority = priority
+			end
+			
+			# find the first ancestor with a priority
+			# (Class.ancestors *includes* self)
 			self.ancestors.each do |klass|
-				if klass.instance_variables.include?(:@priority)
+				if klass.instance_variable_defined?(:@priority)
 					prio = klass.instance_variable_get(:@priority)
 					
 					# literal numbers are okay, although
@@ -97,6 +126,8 @@ module SMS
 				end
 			end
 			
+			# no ancestor has a priority, so assume
+			# that this app is of "normal" priority
 			return NAMED_PRIORITY[:normal]
 		end
 		
