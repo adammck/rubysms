@@ -173,20 +173,38 @@ module SMS
 		def incoming(msg)
 			log_with_time "[#{msg.backend.label}] #{msg.sender.key}: #{msg.text} (#{msg.text.length})", :in
 			
+			# iterate apps starting with
+			# the highest numeric priority
+			sorted = @apps.sort_by { |a| a.priority }.reverse
+			
 			# notify each application of the message.
-			# they may or may not respond to it
-			@apps.each do |app|
-				begin
-					app.incoming msg
+			# they may or may not respond to it, and
+			# may throw the :halt symbol to stop the
+			# notifying further apps. this is useful
+			# in conjunction with App.priority
+			catch(:halt) do
+				sorted.each do |app|
+					begin
+						catch(:continue) do
+							app.incoming msg
+							
+							# if the app responded to the message, cancel
+							# further processing - unless :continue was
+							# thrown, which jumps over this check
+							unless msg.responses.empty?
+								throw :halt
+							end
+						end
 					
-				# something went boom in the app
-				# log it, and continue with the next
-				rescue StandardError => err
-					log_exception(err)
+					# something went boom in the app
+					# log it, and continue with the next
+					rescue StandardError => err
+						log_exception(err)
 				
-				#	if msg.responses.empty?
-				#		msg.respond("Sorry, there was an error while processing your message.")
-				#	end
+					#	if msg.responses.empty?
+					#		msg.respond("Sorry, there was an error while processing your message.")
+					#	end
+					end
 				end
 			end
 		end
@@ -196,11 +214,15 @@ module SMS
 		def outgoing(msg)
 			log_with_time "[#{msg.backend.label}] #{msg.recipient.key}: #{msg.text} (#{msg.text.length})", :out
 			log("Outgoing message exceeds 140 characters", :warn) if msg.text.length > 140
-			cancelled = false
+			
+			# iterate apps starting with the loest numeric priority (the
+			# opposite to #incoming,so a :highest priority app gets the
+			# first look at incoming, and the last word on what goes out)
+			sorted = @apps.sort_by { |a| a.priority }
 			
 			# notify each app of the outgoing sms
 			# note that the sending can still fail
-			@apps.each do |app|
+			sorted.each do |app|
 				app.outgoing msg
 			end
 		end

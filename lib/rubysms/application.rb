@@ -4,6 +4,14 @@
 module SMS
 	class App < Thing
 		
+		NAMED_PRIORITY = {
+			:highest => 100,
+			:high    => 90,
+			:normal  => 50,
+			:low     => 10,
+			:lowest  => 0
+		}
+		
 		# Creates and starts a router to serve only
 		# this application. Handy during development.
 		#
@@ -52,6 +60,52 @@ module SMS
 			
 			router.add_app(self.new)
 			router.serve_forever
+		end
+		
+		def self.priority=(level)
+			@priority = level
+		end
+		
+		def self.priority
+			self.ancestors.each do |klass|
+				if klass.instance_variables.include?(:@priority)
+					prio = klass.instance_variable_get(:@priority)
+					
+					# literal numbers are okay, although
+					# that probably isn't such a good idea
+					if prio.is_a?(Numeric)
+						return prio
+					
+					# if this class has a named priority,
+					# resolve and return it's value
+					elsif prio.is_a?(Symbol)
+						if NAMED_PRIORITY.has_key?(prio)
+							return NAMED_PRIORITY[prio]
+						
+						# don't allow invalid named priorites.
+						# i can't think of a use case, especially
+						# since the constant can be monkey-patched
+						# if it's really necessary
+						else
+							raise(
+								NameError,
+								"Invalid named priority #{prio.inspect} " +\
+								"of {klass}. Valid named priorties are: " +\
+								NAMED_PRIORITY.keys.join(", "))
+						end
+					end
+				end
+			end
+			
+			return NAMED_PRIORITY[:normal]
+		end
+		
+		def priority=(level)
+			@priority = level
+		end
+		
+		def priority
+			@priority or self.class.priority
 		end
 		
 		def incoming(msg)
