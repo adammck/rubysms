@@ -41,7 +41,7 @@ module SMS::Backend
 			
 			# add a screen log message, which is kind of
 			# a lie, because we haven't started anything yet
-			uri = "http://localhost:#{@port}"
+			uri = "http://localhost:#{@port}/"
 			log ["Started HTTP Offline Backend", "URI: #{uri}"], :init
 			
 			# this is goodbye
