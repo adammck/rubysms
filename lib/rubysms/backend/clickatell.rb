@@ -42,6 +42,7 @@ module SMS::Backend
 		def send_sms(msg)
 			begin
 				@api.send_message(msg.phone_number, msg.text)
+				super
 
 			# sending failed, for some reason. i've
 			# never seen this happen, so just log it
