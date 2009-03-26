@@ -14,7 +14,7 @@ module SMS::Backend
 			
 				# start the DRb service, listening for connections
 				# from the RubySMS virtual device (virtual-device.rb)
-				drb = DRb.start_service("druby://localhost:#{DRB_PORT}/", self)
+				drb = DRb.start_service("druby://localhost:#{DRB_PORT}", self)
 				log ["Started DRb Offline Backend", "URI: #{drb.uri}"], :init
 				
 				# a hash to store incoming
