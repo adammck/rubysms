@@ -390,7 +390,8 @@ SMS::Backend::HTTP::HTML = <<EOF
 					 * reload the load to include it */
 					$("send").set("send", {
 						"url": "/" + session_id + "/send",
-						"onComplete": update
+						"onComplete": function() {
+							update.delay(100); }
 				
 					/* submit the form via ajax,
 					 * and cancel the full-page */

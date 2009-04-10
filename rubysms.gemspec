@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 	s.name     = "rubysms"
-	s.version  = "0.8.1"
-	s.date     = "2009-03-16"
+	s.version  = "0.8.2"
+	s.date     = "2009-04-10"
 	s.summary  = "Develop and deploy SMS applications with Ruby"
 	s.email    = "amckaig@unicef.org"
 	s.homepage = "http://github.com/adammck/rubysms"
@@ -13,7 +13,8 @@ Gem::Specification.new do |s|
 		"README.rdoc",
 		"lib/rubysms.rb",
 		
-		# gtk gui
+		# drb clients
+		"bin/rubysms-gtk-drb-client",
 		"bin/rubysms-drb-client",
 		"lib/drb-client.glade",
 		
@@ -28,6 +29,7 @@ Gem::Specification.new do |s|
 		
 		# backends
 		"lib/rubysms/backend/cellphone.ico",
+		"lib/rubysms/backend/clickatell.rb",
 		"lib/rubysms/backend/drb.rb",
 		"lib/rubysms/backend/gsm.rb",
 		"lib/rubysms/backend/http.rb",
@@ -38,6 +40,7 @@ Gem::Specification.new do |s|
 	]
 	
 	s.executables = [
+		"rubysms-gtk-drb-client",
 		"rubysms-drb-client"
 	]
 	
