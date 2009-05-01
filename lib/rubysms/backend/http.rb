@@ -234,7 +234,7 @@ SMS::Backend::HTTP::HTML = <<EOF
 					overflow-y: scroll;
 					font-family: monospace;
 					background: #fff;
-					margin: 0.5em 0;
+					margin-top: 0.5em;
 				}
 			
 					#log li {
@@ -270,11 +270,18 @@ SMS::Backend::HTTP::HTML = <<EOF
 							color: #f00;
 						}
 					
-				form { }
+				form {
+					margin-top: 0.5em; }
 					
-					form input {
+					form input,
+					form textarea {
 						-moz-box-sizing: border-box;
 						width: 100%;
+					}
+
+					form h2 {
+						font-size: 100%;
+						color: #fff;
 					}
 		</style>
 	</head>
@@ -288,7 +295,8 @@ SMS::Backend::HTTP::HTML = <<EOF
 			
 				<form id="send" method="post">
 					<input type="text" id="msg" name="msg" />
-					<!--<input type="submit" value="Send" />-->
+					<h2>Buffer</h2>
+					<textarea id="pending" rows="5"></textarea>
 				</form>
 			</div>
 		</div>
@@ -398,10 +406,16 @@ SMS::Backend::HTTP::HTML = <<EOF
 					}).addEvent("submit", function(ev) {
 						this.send();
 						ev.stop();
-						
-						/* clear the text entry field to
-						 * make way for the next message */
-						$("msg").value = "";
+					
+						/* if there are any lines in the pending field,
+						 * move the first into the message field */
+						var pending = $("pending").value.split("\\n");
+						if(pending.length) {
+							$("msg").value = pending.shift();
+							$("pending").value = pending.join("\\n");
+
+						/* no pending messages, so clear it */
+						} else $("msg").value = "";
 					});
 					
 					/* update the log now, in case there
