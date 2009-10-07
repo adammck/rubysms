@@ -151,56 +151,66 @@ module SMS
 				# (in theory, this shouldn't be a problem, but it turns out
 				# to be a frequent source of bugs)
 				Thread.exclusive do
-					services.each do |service|
-						method, pattern, priority = *service
-						
-						# if the pattern is a string, then assume that
-						# it's a case-insensitive simple trigger - it's
-						# a common enough use-case to warrant an exception
-						if pattern.is_a?(String)
-							pattern = /\A#{pattern}\Z/i
-						end
-						
-						# if this pattern looks like a regex,
-						# attempt to match the incoming message
-						if pattern.respond_to?(:match)
-							if m = pattern.match(text)
+
+					# we'll keep on looping until either the entire message
+					# text has been processed, or no services are interested
+					loop do
+						catch(:restart) do
+							services.each do |service|
+								method, pattern, priority = *service
 								
-								# we have a match! attempt to
-								# dispatch it to the receiver
-								dispatch_to(method, msg, m.captures)
+								# if the pattern is a string, then assume that
+								# it's a case-insensitive simple trigger - it's
+								# a common enough use-case to warrant an exception
+								if pattern.is_a?(String)
+									pattern = /\A#{pattern}\Z/i
+								end
+								
+								# if this pattern looks like a regex,
+								# attempt to match the incoming message
+								if pattern.respond_to?(:match)
+									if m = pattern.match(text)
+										
+										# we have a match! attempt to
+										# dispatch it to the receiver
+										dispatch_to(method, msg, m.captures)
+										
+										# the method accepted the text, but it may not be interested
+										# in the whole message. so crop off just the part that matched
+										text.sub!(pattern, "")
+										
+										# stop processing if we have
+										# dealt with all of the text
+										return true unless text =~ /\S/
+										
+										# there is text remaining, so terminate the services.each
+										# iterator and start again (to ensure that the services
+										# receive the remainder in the correct order)
+										throw :restart
+									end
+								
+								# the special :anything pattern can be used
+								# as a default service. once this is hit, we
+								# are done processing the entire message
+								elsif pattern == :anything
+									dispatch_to(method, msg, [text])
+									return true
 							
-								# the method accepted the text, but it may not be interested
-								# in the whole message. so crop off just the part that matched
-								text.sub!(pattern, "")
-							
-								# stop processing if we have
-								# dealt with all of the text
-								return true unless text =~ /\S/
-							
-								# there is text remaining, so
-								# (re-)start iterating services
-								# (jumps back to services.each)
-								retry
-							end
-				
-						# the special :anything pattern can be used
-						# as a default service. once this is hit, we
-						# are done processing the entire message
-						elsif pattern == :anything
-							dispatch_to(method, msg, [text])
+								# we don't understand what this pattern
+								# is, or how it ended up in @services.
+								# no big deal, but log it anyway, since
+								# it indicates that *something* is awry
+								else
+									log "Invalid pattern: #{pattern.inspect}", :warn
+								end
+							end#each
+
+							# if we've reached this point, all of the services
+							# were offered the text, but none of them matched
+							# further looping will be infinite, so abort
 							return true
-						
-						# we don't understand what this pattern
-						# is, or how it ended up in @services.
-						# no big deal, but log it anyway, since
-						# it indicates that *something* is awry
-						else
-							log "Invalid pattern: #{pattern.inspect}", :warn
-						end
-					end#each
-					
-					
+						end#catch
+					end#loop
 				end#exclusive
 			end#if
 		end
